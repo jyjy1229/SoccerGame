@@ -1,40 +1,46 @@
-type PlayerType = "ST" | "GK";
-
 interface PlayerInfo {
   name: string;
   height: number;
   weight: number;
 }
 
-interface strikerStats {
+type ST = {
+  numOfMatch: number;
   goals: number;
   misses: number;
-}
+};
 
-interface goalKeeperStats {
+type GK = {
+  numOfMatch: number;
   saves: number;
   conceded: number;
-}
+};
 
-abstract class Player {
+abstract class Player<T> {
   protected playerInfo: PlayerInfo;
+  protected stats: T;
 
-  constructor(playerInfo: PlayerInfo) {
+  constructor(playerInfo: PlayerInfo, stats: T) {
     this.playerInfo = playerInfo;
+    this.stats = stats;
   }
 
-  abstract printStats(): void;
+  abstract getOverAll(): number;
+
+  getPlayerInfo(): PlayerInfo {
+    return this.playerInfo;
+  }
+
+  getStats(): T {
+    return this.stats;
+  }
 }
 
-class GoalKeeper extends Player {
-  private stats: goalKeeperStats = {
-    saves: 0,
-    conceded: 0,
-  };
-
-  printStats(): void {
-    console.log(
-      `${this.playerInfo.name} saves ${this.stats.saves} times and concedes ${this.stats.conceded} times`
+class GoalKeeper extends Player<GK> {
+  getOverAll(): number {
+    return (
+      90 +
+      ((this.stats.saves - this.stats.conceded) * 10) / this.stats.numOfMatch
     );
   }
 
@@ -47,15 +53,10 @@ class GoalKeeper extends Player {
   }
 }
 
-class Striker extends Player {
-  private stats: strikerStats = {
-    goals: 0,
-    misses: 0,
-  };
-
-  printStats(): void {
-    console.log(
-      `${this.playerInfo.name} goals ${this.stats.goals} times and misses ${this.stats.misses} times`
+class Striker extends Player<ST> {
+  getOverAll(): number {
+    return (
+      90 + ((this.stats.goals - this.stats.misses) * 10) / this.stats.numOfMatch
     );
   }
 
@@ -69,42 +70,122 @@ class Striker extends Player {
 }
 
 class Soccer {
-  static makeStriker(playerInfo: PlayerInfo) {
-    const newPlayer = new Striker(playerInfo);
+  static makeStriker(playerInfo: PlayerInfo, stats: ST) {
+    const newPlayer = new Striker(playerInfo, stats);
     return newPlayer;
   }
 
-  static makeGoalKeeper(playerInfo: PlayerInfo) {
-    const newPlayer = new GoalKeeper(playerInfo);
+  static makeGoalKeeper(playerInfo: PlayerInfo, stats: GK) {
+    const newPlayer = new GoalKeeper(playerInfo, stats);
     return newPlayer;
   }
 
-  static kickPenalty(striker: Striker, goalKeeper: GoalKeeper): void {
-    const goals = Math.round(Math.random() * 5);
-    const saves = 5 - goals;
-    striker.goals(goals);
-    striker.misses(saves);
-    goalKeeper.saves(saves);
-    goalKeeper.conceded(goals);
-  }
+  static play(striker: Striker, goalKeeper: GoalKeeper): void {
+    const stOverAll = striker.getOverAll();
+    const gkOverAll = goalKeeper.getOverAll();
 
-  static printStats(player: Striker | GoalKeeper) {
-    player.printStats();
+    const stPf = Math.random() * stOverAll;
+    const gkPf = Math.random() * gkOverAll;
+
+    let message = `${striker.getPlayerInfo().name}'s overall: ${stOverAll}, ${
+      goalKeeper.getPlayerInfo().name
+    }'s overall: ${gkOverAll}, `;
+    if (stPf > gkPf) {
+      message += `${striker.getPlayerInfo().name} wins`;
+    } else if (stPf < gkPf) {
+      message += `${goalKeeper.getPlayerInfo().name} wins`;
+    } else {
+      message += "draws";
+    }
+
+    console.log(message);
   }
 }
 
-const doolly = Soccer.makeStriker({
-  name: "jeyun",
-  height: 177,
-  weight: 74,
-});
+const striker1 = Soccer.makeStriker(
+  {
+    name: "doolly",
+    height: 175,
+    weight: 70,
+  },
+  {
+    numOfMatch: 292,
+    goals: 311,
+    misses: 19,
+  }
+);
 
-const jordan = Soccer.makeGoalKeeper({
-  name: "jiwon",
-  height: 175,
-  weight: 70,
-});
+const striker2 = Soccer.makeStriker(
+  {
+    name: "timo",
+    height: 175,
+    weight: 70,
+  },
+  {
+    numOfMatch: 20,
+    goals: 25,
+    misses: 3,
+  }
+);
 
-Soccer.kickPenalty(doolly, jordan);
-Soccer.printStats(doolly);
-Soccer.printStats(jordan);
+const striker3 = Soccer.makeStriker(
+  {
+    name: "issac",
+    height: 175,
+    weight: 70,
+  },
+  {
+    numOfMatch: 146,
+    goals: 25,
+    misses: 1,
+  }
+);
+
+const goalKeeper1 = Soccer.makeGoalKeeper(
+  {
+    name: "jordan",
+    height: 175,
+    weight: 70,
+  },
+  {
+    numOfMatch: 600,
+    saves: 1052,
+    conceded: 537,
+  }
+);
+
+const goalKeeper2 = Soccer.makeGoalKeeper(
+  {
+    name: "leica",
+    height: 175,
+    weight: 70,
+  },
+  {
+    numOfMatch: 700,
+    saves: 1052,
+    conceded: 427,
+  }
+);
+
+const goalKeeper3 = Soccer.makeGoalKeeper(
+  {
+    name: "whosthis",
+    height: 175,
+    weight: 70,
+  },
+  {
+    numOfMatch: 1,
+    saves: 0,
+    conceded: 3,
+  }
+);
+
+Soccer.play(striker1, goalKeeper1);
+Soccer.play(striker1, goalKeeper2);
+Soccer.play(striker1, goalKeeper3);
+Soccer.play(striker2, goalKeeper1);
+Soccer.play(striker2, goalKeeper2);
+Soccer.play(striker2, goalKeeper3);
+Soccer.play(striker3, goalKeeper1);
+Soccer.play(striker3, goalKeeper2);
+Soccer.play(striker3, goalKeeper3);
